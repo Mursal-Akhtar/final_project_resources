@@ -159,10 +159,19 @@ def run_task4_combined():
     # Load labels
     val_labels = pd.read_csv(val_csv).iloc[:, 1:].values
 
-    # Threshold search (finest grid: 0.20-0.80, step 0.01)
-    print("\nSearching thresholds on validation (grid: 0.20-0.80, step 0.01)...")
-    grid = np.arange(0.20, 0.81, 0.01)
-    thresholds = find_best_thresholds(val_logits_ensemble, val_labels, grid)
+    # Inference with TTA
+    print("\nInferring validation set...")
+    val_logits_se = infer_logits(model_se, val_loader, device, use_tta=True)
+    val_logits_mha = infer_logits(model_mha, val_loader, device, use_tta=True)
+    val_logits_ensemble = (val_logits_se + val_logits_mha) / 2.0
+
+    print("Inferring test set...")
+    test_logits_se = infer_logits(model_se, test_loader, device, use_tta=True)
+    test_logits_mha = infer_logits(model_mha, test_loader, device, use_tta=True)
+    test_logits_ensemble = (test_logits_se + test_logits_mha) / 2.0
+
+    # Load labels
+    val_labels = pd.read_csv(val_csv).iloc[:, 1:].values
 
     # Evaluate
     val_f1 = evaluate_with_thresholds(val_logits_ensemble, val_labels, thresholds)
