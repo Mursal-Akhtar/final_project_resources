@@ -165,7 +165,7 @@ class ResNet18WithAttention(nn.Module):
             self.attention1 = nn.Identity()
             self.attention2 = nn.Identity()
             self.attention3 = MultiHeadAttention(256, num_heads=4)
-            self.attention4 = MultiHeadAttention(512, num_heads=8)
+            self.attention4 = MultiHeadAttention(512, num_heads=4)
         
         # Load pretrained weights if provided
         if pretrained_weights is not None:
@@ -330,7 +330,7 @@ def train_with_attention(backbone, attention_type, train_csv, val_csv, test_csv,
         # Fine-tune full model (ResNet18 works well with full FT)
         for param in model.parameters():
             param.requires_grad = True
-        lr = 1e-4
+        lr = 1.5e-4 if attention_type == "mha" else 1e-4
     elif backbone == "efficientnet":
         model = EfficientNetWithAttention(attention_type=attention_type,
                                          num_classes=3,
