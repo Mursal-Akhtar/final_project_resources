@@ -117,8 +117,14 @@ class ResNet18WithAttention(nn.Module):
         
         # Base ResNet18
         resnet = models.resnet18(pretrained=False)
+        
+        # Load pretrained weights if provided (excluding fc layer)
         if pretrained_weights:
-            resnet.load_state_dict(torch.load(pretrained_weights, map_location='cpu'))
+            state_dict = torch.load(pretrained_weights, map_location='cpu')
+            # Remove fc layer from state dict
+            state_dict = {k: v for k, v in state_dict.items() if not k.startswith('fc.')}
+            resnet.load_state_dict(state_dict, strict=False)
+            print(f"Loaded pretrained backbone weights (excluding fc layer)")
         
         self.conv1 = resnet.conv1
         self.bn1 = resnet.bn1
