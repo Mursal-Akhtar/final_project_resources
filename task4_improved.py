@@ -22,15 +22,16 @@ from task3 import ResNet18WithAttention
 # ========================
 # Threshold optimization
 # ========================
-def find_best_thresholds(logits: np.ndarray, labels: np.ndarray, grid_step=0.01) -> np.ndarray:
+def find_best_thresholds(logits: np.ndarray, labels: np.ndarray, grid_step=0.05) -> np.ndarray:
     """
     Grid search for optimal per-class thresholds
-    Finer grid (0.01 step) for better precision
+    Uses coarse grid (0.05 step) for speed, then fine-tunes around best
     """
     best_f1 = -1
     best_thresholds = np.array([0.5, 0.5, 0.5])
     
-    grid = np.arange(0.1, 0.91, grid_step)
+    # Coarse grid search (0.05 step = 13 values, 13^3 = 2,197 iterations - fast)
+    grid = np.arange(0.20, 0.81, grid_step)
     for th1 in grid:
         for th2 in grid:
             for th3 in grid:
@@ -157,11 +158,11 @@ def run_task4_improved():
     results = {}
 
     # ==================
-    # Candidate A: SE only + finest thresholds
+    # Candidate A: SE only + coarse threshold grid
     # ==================
-    print("\n[A] SE Only with Finest Threshold Grid (0.01 step)")
+    print("\n[A] SE Only with Coarse Threshold Grid (0.05 step - fast)")
     val_logits, val_labels = infer_logits(model_se, val_loader, device, use_tta=True)
-    th_se = find_best_thresholds(val_logits, val_labels, grid_step=0.01)
+    th_se = find_best_thresholds(val_logits, val_labels, grid_step=0.05)
     val_f1_se = evaluate_with_thresholds(val_logits, val_labels, th_se)
     
     test_logits, test_labels = infer_logits(model_se, test_loader, device, use_tta=True)
@@ -176,11 +177,11 @@ def run_task4_improved():
     print(f"  Thresholds: {[round(x, 2) for x in th_se]}")
 
     # ==================
-    # Candidate B: Ensemble (SE + MHA) equal weights + finest thresholds
+    # Candidate B: Ensemble (SE + MHA) equal weights + coarse thresholds
     # ==================
-    print("\n[B] Ensemble (SE + MHA, Equal Weights) with Finest Threshold Grid (0.01 step)")
+    print("\n[B] Ensemble (SE + MHA, Equal Weights) with Coarse Threshold Grid (0.05 step - fast)")
     val_logits, val_labels = infer_logits_ensemble([model_se, model_mha], val_loader, device, weights=[0.5, 0.5], use_tta=True)
-    th_ens_eq = find_best_thresholds(val_logits, val_labels, grid_step=0.01)
+    th_ens_eq = find_best_thresholds(val_logits, val_labels, grid_step=0.05)
     val_f1_ens_eq = evaluate_with_thresholds(val_logits, val_labels, th_ens_eq)
     
     test_logits, test_labels = infer_logits_ensemble([model_se, model_mha], test_loader, device, weights=[0.5, 0.5], use_tta=True)
@@ -195,11 +196,11 @@ def run_task4_improved():
     print(f"  Thresholds: {[round(x, 2) for x in th_ens_eq]}")
 
     # ==================
-    # Candidate C: Ensemble (SE 0.6, MHA 0.4 - favoring SE) + finest thresholds
+    # Candidate C: Ensemble (SE 0.6, MHA 0.4 - favoring SE) + coarse thresholds
     # ==================
-    print("\n[C] Ensemble (SE 0.6, MHA 0.4 - Weighted) with Finest Threshold Grid (0.01 step)")
+    print("\n[C] Ensemble (SE 0.6, MHA 0.4 - Weighted) with Coarse Threshold Grid (0.05 step - fast)")
     val_logits, val_labels = infer_logits_ensemble([model_se, model_mha], val_loader, device, weights=[0.6, 0.4], use_tta=True)
-    th_ens_w = find_best_thresholds(val_logits, val_labels, grid_step=0.01)
+    th_ens_w = find_best_thresholds(val_logits, val_labels, grid_step=0.05)
     val_f1_ens_w = evaluate_with_thresholds(val_logits, val_labels, th_ens_w)
     
     test_logits, test_labels = infer_logits_ensemble([model_se, model_mha], test_loader, device, weights=[0.6, 0.4], use_tta=True)
