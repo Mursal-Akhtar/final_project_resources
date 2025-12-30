@@ -123,6 +123,7 @@ def task1_baseline(backbone, train_csv, val_csv, test_csv, train_image_dir,
     """
     Task 1-1: Test pretrained models WITHOUT fine-tuning
     Establishes baseline F1-scores
+    Uses fully trained pretrained models without any modifications
     """
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -144,24 +145,22 @@ def task1_baseline(backbone, train_csv, val_csv, test_csv, train_image_dir,
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=0)
 
     # Build model
-    model = build_model(backbone, num_classes=3, pretrained=True).to(device)
+    model = build_model(backbone, num_classes=3, pretrained=False).to(device)
 
-    # Load pretrained backbone if provided
+    # Load complete pretrained model (backbone + classifier)
     if pretrained_backbone is not None:
-        print(f"Loading pretrained backbone from: {pretrained_backbone}")
+        print(f"Loading pretrained model from: {pretrained_backbone}")
         state_dict = torch.load(pretrained_backbone, map_location="cpu")
-        # Only load backbone weights, not classifier
-        model_dict = model.state_dict()
-        pretrained_dict = {k: v for k, v in state_dict.items() if k in model_dict and 'fc' not in k and 'classifier' not in k}
-        model_dict.update(pretrained_dict)
-        model.load_state_dict(model_dict)
+        model.load_state_dict(state_dict)
+    else:
+        raise ValueError("Pretrained backbone model must be provided for baseline evaluation")
 
     # Freeze all parameters (no training)
     for param in model.parameters():
         param.requires_grad = False
 
-    # Evaluate on test set
-    print(f"\nEvaluating {backbone} baseline on test set...")
+    # Evaluate on test set WITHOUT any modifications
+    print(f"\nEvaluating {backbone} baseline on test set (NO FINE-TUNING)...")
     results = evaluate_model(model, test_loader, device, backbone)
 
     return results
@@ -203,16 +202,20 @@ def task1_finetune_head(backbone, train_csv, val_csv, test_csv, train_image_dir,
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=0)
 
     # Build model
-    model = build_model(backbone, num_classes=3, pretrained=True).to(device)
+    model = build_model(backbone, num_classes=3, pretrained=False).to(device)
 
-    # Load pretrained backbone if provided
+    # Load pretrained model first (if provided)
     if pretrained_backbone is not None:
-        print(f"Loading pretrained backbone from: {pretrained_backbone}")
+        print(f"Loading pretrained model from: {pretrained_backbone}")
         state_dict = torch.load(pretrained_backbone, map_location="cpu")
-        model_dict = model.state_dict()
-        pretrained_dict = {k: v for k, v in state_dict.items() if k in model_dict and 'fc' not in k and 'classifier' not in k}
-        model_dict.update(pretrained_dict)
-        model.load_state_dict(model_dict)
+        try:
+            model.load_state_dict(state_dict)
+        except RuntimeError:
+            # If full model doesn't load, try loading only backbone
+            model_dict = model.state_dict()
+            pretrained_dict = {k: v for k, v in state_dict.items() if k in model_dict and 'fc' not in k and 'classifier' not in k}
+            model_dict.update(pretrained_dict)
+            model.load_state_dict(model_dict)
 
     # Freeze backbone, unfreeze classifier
     if backbone == "resnet18":
@@ -314,16 +317,20 @@ def task1_finetune_full(backbone, train_csv, val_csv, test_csv, train_image_dir,
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=0)
 
     # Build model
-    model = build_model(backbone, num_classes=3, pretrained=True).to(device)
+    model = build_model(backbone, num_classes=3, pretrained=False).to(device)
 
-    # Load pretrained backbone if provided
+    # Load pretrained model first (if provided)
     if pretrained_backbone is not None:
-        print(f"Loading pretrained backbone from: {pretrained_backbone}")
+        print(f"Loading pretrained model from: {pretrained_backbone}")
         state_dict = torch.load(pretrained_backbone, map_location="cpu")
-        model_dict = model.state_dict()
-        pretrained_dict = {k: v for k, v in state_dict.items() if k in model_dict and 'fc' not in k and 'classifier' not in k}
-        model_dict.update(pretrained_dict)
-        model.load_state_dict(model_dict)
+        try:
+            model.load_state_dict(state_dict)
+        except RuntimeError:
+            # If full model doesn't load, try loading only backbone
+            model_dict = model.state_dict()
+            pretrained_dict = {k: v for k, v in state_dict.items() if k in model_dict and 'fc' not in k and 'classifier' not in k}
+            model_dict.update(pretrained_dict)
+            model.load_state_dict(model_dict)
 
     # Unfreeze all parameters
     for param in model.parameters():
