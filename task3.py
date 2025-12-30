@@ -73,7 +73,7 @@ class MultiHeadAttention(nn.Module):
     Self-attention mechanism with multiple representation subspaces
     Reference: Vaswani et al., "Attention is All You Need" (NeurIPS 2017)
     """
-    def __init__(self, in_channels, num_heads=8):
+    def __init__(self, in_channels, num_heads=8, dropout=0.1):
         super(MultiHeadAttention, self).__init__()
         self.in_channels = in_channels
         self.num_heads = num_heads
@@ -85,6 +85,7 @@ class MultiHeadAttention(nn.Module):
         self.key = nn.Linear(in_channels, in_channels, bias=False)
         self.value = nn.Linear(in_channels, in_channels, bias=False)
         self.fc_out = nn.Linear(in_channels, in_channels)
+        self.dropout = nn.Dropout(dropout)
         
     def forward(self, x):
         # Input: [b, c, h, w]
@@ -116,12 +117,14 @@ class MultiHeadAttention(nn.Module):
         
         # Final linear projection
         out = self.fc_out(out)  # [b, hw, c]
+        out = self.dropout(out)
         
         # Reshape back
         out = out.permute(0, 2, 1)  # [b, c, hw]
         out = out.view(b, c, h, w)  # [b, c, h, w]
         
-        return out
+        # Residual connection for stability
+        return out + x
 
 
 # ========================
@@ -158,10 +161,10 @@ class ResNet18WithAttention(nn.Module):
             self.attention3 = SEBlock(256)
             self.attention4 = SEBlock(512)
         elif attention_type == "mha":
-            # To keep memory small, only apply MHA at deepest stage (8x8 tokens)
+            # Apply MHA at deeper stages (small spatial map) to control memory
             self.attention1 = nn.Identity()
             self.attention2 = nn.Identity()
-            self.attention3 = nn.Identity()
+            self.attention3 = MultiHeadAttention(256, num_heads=4)
             self.attention4 = MultiHeadAttention(512, num_heads=8)
         
         # Load pretrained weights if provided
@@ -310,7 +313,7 @@ def train_with_attention(backbone, attention_type, train_csv, val_csv, test_csv,
     ])
 
     # Datasets & DataLoaders
-    effective_batch_size = batch_size if attention_type != "mha" else min(batch_size, 16)
+    effective_batch_size = batch_size if attention_type != "mha" else min(batch_size, 8)
     train_ds = RetinaMultiLabelDataset(train_csv, train_image_dir, transform)
     val_ds = RetinaMultiLabelDataset(val_csv, val_image_dir, transform)
     test_ds = RetinaMultiLabelDataset(test_csv, test_image_dir, transform)
