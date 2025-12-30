@@ -176,13 +176,52 @@ def evaluate_model(model, data_loader, device, backbone="resnet18"):
 
 
 # ========================
+# Prediction helper for Kaggle onsite submission
+# ========================
+def predict_onsite_and_save(model, onsite_csv, onsite_image_dir, output_csv, device, img_size=256, batch_size=32):
+    transform = transforms.Compose([
+        transforms.Resize((img_size, img_size)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
+    onsite_ds = RetinaMultiLabelDataset(onsite_csv, onsite_image_dir, transform)
+    onsite_loader = DataLoader(onsite_ds, batch_size=batch_size, shuffle=False, num_workers=0)
+
+    model.eval()
+    all_preds, all_files = [], []
+
+    with torch.no_grad():
+        for imgs, filenames in onsite_loader:
+            imgs = imgs.to(device)
+            outputs = model(imgs)
+            probs = torch.sigmoid(outputs).cpu().numpy()
+            preds = (probs > 0.5).astype(int)
+            all_preds.extend(preds)
+            all_files.extend(filenames)
+
+    all_preds = np.array(all_preds)
+    submission_df = pd.DataFrame({
+        "id": all_files,
+        "D": all_preds[:, 0],
+        "G": all_preds[:, 1],
+        "A": all_preds[:, 2],
+    })
+
+    os.makedirs(os.path.dirname(output_csv), exist_ok=True)
+    submission_df.to_csv(output_csv, index=False)
+    print(f"Saved onsite submission: {output_csv} | samples: {len(submission_df)}")
+    return submission_df
+
+
+# ========================
 # Training function
 # ========================
 def train_with_loss(backbone, loss_name, train_csv, val_csv, test_csv, 
                     train_image_dir, val_image_dir, test_image_dir,
                     pretrained_backbone=None, epochs=20, batch_size=32, 
                     lr=1e-4, img_size=256, save_dir="checkpoints", 
-                    device=None, **loss_kwargs):
+                    device=None, onsite_csv=None, onsite_image_dir=None, submissions_dir="submissions", **loss_kwargs):
     """
     Train model with specified loss function
     """
@@ -287,19 +326,26 @@ def train_with_loss(backbone, loss_name, train_csv, val_csv, test_csv,
             best_val_loss = val_loss
             torch.save(model.state_dict(), ckpt_path)
 
-    # Evaluate on test set
+    # Evaluate on test set (offsite)
     model.load_state_dict(torch.load(ckpt_path, map_location=device))
-    print(f"\nEvaluating {backbone} with {loss_name} loss on test set...")
+    print(f"\nEvaluating {backbone} with {loss_name} loss on offsite test set...")
     results = evaluate_model(model, test_loader, device, backbone)
 
     print(f"\n{'-'*70}")
     for disease, metrics in results.items():
         if disease != "average_f1":
             print(f"{disease}: F1 = {metrics['f1_score']:.4f}")
-    print(f"Average F1-score: {results['average_f1']:.4f}")
+    print(f"Average F1-score (offsite): {results['average_f1']:.4f}")
     print(f"{'-'*70}")
 
-    return results, ckpt_path
+    # Generate onsite submission CSV (for Kaggle)
+    submission_path = None
+    if onsite_csv and onsite_image_dir:
+        os.makedirs(submissions_dir, exist_ok=True)
+        submission_path = os.path.join(submissions_dir, f"task2_{loss_name}_{backbone}.csv")
+        predict_onsite_and_save(model, onsite_csv, onsite_image_dir, submission_path, device=device, img_size=img_size, batch_size=batch_size)
+
+    return results, ckpt_path, submission_path
 
 
 # ========================
@@ -313,6 +359,8 @@ if __name__ == "__main__":
     train_image_dir = "./images/train"
     val_image_dir = "./images/val"
     test_image_dir = "./images/offsite_test"
+    onsite_csv = "onsite_test_submission.csv"
+    onsite_image_dir = "./images/onsite_test"
 
     # Pretrained backbones
     pretrained_resnet18 = './pretrained_backbone/ckpt_resnet18_ep50.pt'
@@ -348,7 +396,7 @@ if __name__ == "__main__":
     print(f"{'='*70}")
 
     for loss_name, loss_kwargs in loss_configs:
-        results, ckpt_path = train_with_loss(
+        results, ckpt_path, submission_path = train_with_loss(
             backbone="resnet18",
             loss_name=loss_name,
             train_csv=train_csv,
@@ -362,9 +410,13 @@ if __name__ == "__main__":
             batch_size=32,
             lr=1e-5,
             device=device,
+            onsite_csv=onsite_csv,
+            onsite_image_dir=onsite_image_dir,
             **loss_kwargs
         )
         all_results[f"resnet18_{loss_name}"] = results
+        if submission_path:
+            all_results[f"resnet18_{loss_name}"]["onsite_submission"] = submission_path
 
     # ========================
     # EfficientNet with different losses
@@ -376,7 +428,7 @@ if __name__ == "__main__":
     print(f"{'='*70}")
 
     for loss_name, loss_kwargs in loss_configs:
-        results, ckpt_path = train_with_loss(
+        results, ckpt_path, submission_path = train_with_loss(
             backbone="efficientnet",
             loss_name=loss_name,
             train_csv=train_csv,
@@ -390,9 +442,13 @@ if __name__ == "__main__":
             batch_size=32,
             lr=1e-5,
             device=device,
+            onsite_csv=onsite_csv,
+            onsite_image_dir=onsite_image_dir,
             **loss_kwargs
         )
         all_results[f"efficientnet_{loss_name}"] = results
+        if submission_path:
+            all_results[f"efficientnet_{loss_name}"]["onsite_submission"] = submission_path
 
     # ========================
     # Summary
