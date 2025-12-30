@@ -119,6 +119,8 @@ def evaluate_with_thresholds(logits: np.ndarray, labels: np.ndarray, thresholds:
 # ========================
 def load_resnet(attention_type: str, ckpt_path: str, device) -> nn.Module:
     model = ResNet18WithAttention(attention_type=attention_type, num_classes=3, pretrained_weights=None)
+    if not os.path.exists(ckpt_path):
+        raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}. Run task3.py first to generate it.")
     state = torch.load(ckpt_path, map_location=device)
     model.load_state_dict(state)
     model.to(device)
@@ -141,8 +143,9 @@ def run_task4():
     val_dir = "./images/val"
     test_dir = "./images/offsite_test"
 
-    ckpt_se = "checkpoints/task3_resnet18_se.pt"
-    ckpt_mha = "checkpoints/task3_resnet18_mha.pt"
+    # Checkpoint names match task3 saving convention: task3_{attn}_{backbone}.pt
+    ckpt_se = "checkpoints/task3_se_resnet18.pt"
+    ckpt_mha = "checkpoints/task3_mha_resnet18.pt"
 
     # Transforms
     base_transform = transforms.Compose([
