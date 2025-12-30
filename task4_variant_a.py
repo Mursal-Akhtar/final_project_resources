@@ -1,6 +1,6 @@
 """
-Task 4 Variant A: 3-Model Ensemble
-Uses Task 2 Class-Balanced ResNet18 + Task 3 SE + Task 3 MHA
+Task 4 Variant A: SE Only + Finer Thresholds
+Uses Task 3 SE ResNet18 only
 Finer threshold grid: 0.20-0.80, step 0.02
 """
 import os
@@ -101,9 +101,7 @@ def run_task4_ensemble3():
     test_dir = "./images/offsite_test"
 
     # Checkpoints
-    ckpt_task2_cb = "checkpoints/task2_improved_class_balanced_resnet18.pt"
     ckpt_task3_se = "checkpoints/task3_se_resnet18.pt"
-    ckpt_task3_mha = "checkpoints/task3_mha_resnet18.pt"
 
     # Transform
     transform = transforms.Compose([
@@ -118,26 +116,16 @@ def run_task4_ensemble3():
     val_loader = DataLoader(val_ds, batch_size=32, shuffle=False, num_workers=0)
     test_loader = DataLoader(test_ds, batch_size=32, shuffle=False, num_workers=0)
 
-    # Load models
-    print("Loading Task 2 Class-Balanced ResNet18...")
-    model_task2 = load_resnet("se", ckpt_task2_cb, device)
+    # Load model
     print("Loading Task 3 SE ResNet18...")
     model_se = load_resnet("se", ckpt_task3_se, device)
-    print("Loading Task 3 MHA ResNet18...")
-    model_mha = load_resnet("mha", ckpt_task3_mha, device)
 
     # Inference with TTA
     print("\nInferring validation set...")
-    val_logits_task2 = infer_logits(model_task2, val_loader, device, use_tta=True)
-    val_logits_se = infer_logits(model_se, val_loader, device, use_tta=True)
-    val_logits_mha = infer_logits(model_mha, val_loader, device, use_tta=True)
-    val_logits_ensemble = (val_logits_task2 + val_logits_se + val_logits_mha) / 3.0
+    val_logits = infer_logits(model_se, val_loader, device, use_tta=True)
 
     print("Inferring test set...")
-    test_logits_task2 = infer_logits(model_task2, test_loader, device, use_tta=True)
-    test_logits_se = infer_logits(model_se, test_loader, device, use_tta=True)
-    test_logits_mha = infer_logits(model_mha, test_loader, device, use_tta=True)
-    test_logits_ensemble = (test_logits_task2 + test_logits_se + test_logits_mha) / 3.0
+    test_logits = infer_logits(model_se, test_loader, device, use_tta=True)
 
     # Load labels
     val_labels = pd.read_csv(val_csv).iloc[:, 1:].values
@@ -145,16 +133,16 @@ def run_task4_ensemble3():
     # Threshold search (finer grid: 0.20-0.80, step 0.02)
     print("\nSearching thresholds on validation (grid: 0.20-0.80, step 0.02)...")
     grid = np.arange(0.20, 0.81, 0.02)
-    thresholds = find_best_thresholds(val_logits_ensemble, val_labels, grid)
+    thresholds = find_best_thresholds(val_logits, val_labels, grid)
 
     # Evaluate
-    val_f1 = evaluate_with_thresholds(val_logits_ensemble, val_labels, thresholds)
-    test_f1 = evaluate_with_thresholds(test_logits_ensemble, val_labels, thresholds)
+    val_f1 = evaluate_with_thresholds(val_logits, val_labels, thresholds)
+    test_f1 = evaluate_with_thresholds(test_logits, val_labels, thresholds)
 
     print(f"\n{'='*70}")
-    print(f"TASK 4 VARIANT A: 3-Model Ensemble + Finer Thresholds")
+    print(f"TASK 4 VARIANT A: SE Only + Finer Thresholds")
     print(f"{'='*70}")
-    print(f"Models: Task2 Class-Balanced + Task3 SE + Task3 MHA")
+    print(f"Model: Task3 SE ResNet18")
     print(f"Threshold Grid: 0.20-0.80, step 0.02")
     print(f"TTA: Yes (orig + hflip)")
     print(f"\nVal F1:  {val_f1:.4f}")
@@ -170,7 +158,7 @@ def run_task4_ensemble3():
     print(f"{'='*70}\n")
 
     results = {
-        "variant": "A: 3-Model Ensemble (Task2-CB + Task3-SE + Task3-MHA)",
+        "variant": "A: SE Only + Finer Thresholds",
         "threshold_grid": "0.20-0.80, step 0.02",
         "tta": True,
         "val_f1": float(val_f1),

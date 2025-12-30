@@ -1,7 +1,7 @@
 """
-Task 4 Variant C: Combined (3-Model Ensemble + Finer Thresholds)
-Uses Task 2 Class-Balanced + Task 3 SE + Task 3 MHA
-With finer threshold grid: 0.20-0.80, step 0.01 (finest)
+Task 4 Variant C: SE + MHA Ensemble + Finest Thresholds
+Uses Task 3 SE + Task 3 MHA
+With finest threshold grid: 0.20-0.80, step 0.01
 """
 import os
 import json
@@ -121,7 +121,6 @@ def run_task4_combined():
     test_dir = "./images/offsite_test"
 
     # Checkpoints
-    ckpt_task2_cb = "checkpoints/task2_improved_class_balanced_resnet18.pt"
     ckpt_task3_se = "checkpoints/task3_se_resnet18.pt"
     ckpt_task3_mha = "checkpoints/task3_mha_resnet18.pt"
 
@@ -139,8 +138,6 @@ def run_task4_combined():
     test_loader = DataLoader(test_ds, batch_size=32, shuffle=False, num_workers=0)
 
     # Load models
-    print("Loading Task 2 Class-Balanced ResNet18...")
-    model_task2 = load_resnet("se", ckpt_task2_cb, device)
     print("Loading Task 3 SE ResNet18...")
     model_se = load_resnet("se", ckpt_task3_se, device)
     print("Loading Task 3 MHA ResNet18...")
@@ -172,9 +169,9 @@ def run_task4_combined():
     test_f1 = evaluate_with_thresholds(test_logits_ensemble, val_labels, thresholds)
 
     print(f"\n{'='*70}")
-    print(f"TASK 4 VARIANT C: 3-Model Ensemble + Finest Thresholds")
+    print(f"TASK 4 VARIANT C: SE + MHA Ensemble + Finest Thresholds")
     print(f"{'='*70}")
-    print(f"Models: Task2 Class-Balanced + Task3 SE + Task3 MHA")
+    print(f"Models: Task3 SE + Task3 MHA")
     print(f"Threshold Grid: 0.20-0.80, step 0.01 (finest)")
     print(f"TTA: Yes (orig + hflip)")
     print(f"\nVal F1:  {val_f1:.4f}")
@@ -190,7 +187,7 @@ def run_task4_combined():
     print(f"{'='*70}\n")
 
     results = {
-        "variant": "C: 3-Model Ensemble + Finest Thresholds",
+        "variant": "C: SE + MHA Ensemble + Finest Thresholds",
         "threshold_grid": "0.20-0.80, step 0.01",
         "tta": True,
         "val_f1": float(val_f1),
