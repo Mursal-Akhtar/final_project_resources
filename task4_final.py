@@ -195,10 +195,48 @@ def run_task4_final():
     test_logits, test_labels = infer_logits(model_se, test_loader, device, use_tta=True)
     test_f1 = evaluate_logits(test_logits, test_labels, threshold=0.5)
     
-    results["pure_se"] = {
+    results["pure_se_with_tta"] = {
         "val_f1": float(val_f1),
         "test_f1": float(test_f1),
         "weights": [1.0, 0.0],
+        "tta": True,
+    }
+    print(f"  Val F1: {val_f1:.4f} | Test F1: {test_f1:.4f}")
+
+    # ==================
+    # Option 1D: Pure SE WITHOUT TTA - Task 3 baseline replication
+    # ==================
+    print("\n[Option 1D] Pure SE WITHOUT TTA - Task 3 Baseline Replication")
+    val_logits, val_labels = infer_logits(model_se, val_loader, device, use_tta=False)
+    val_f1 = evaluate_logits(val_logits, val_labels, threshold=0.5)
+    
+    test_logits, test_labels = infer_logits(model_se, test_loader, device, use_tta=False)
+    test_f1 = evaluate_logits(test_logits, test_labels, threshold=0.5)
+    
+    results["pure_se_no_tta"] = {
+        "val_f1": float(val_f1),
+        "test_f1": float(test_f1),
+        "weights": [1.0, 0.0],
+        "tta": False,
+    }
+    print(f"  Val F1: {val_f1:.4f} | Test F1: {test_f1:.4f}")
+    print(f"  Expected: 0.8355 (Task 3 result)")
+
+    # ==================
+    # Option 1E: Ensemble 0.8/0.2 WITHOUT TTA
+    # ==================
+    print("\n[Option 1E] Ensemble SE=0.8, MHA=0.2 WITHOUT TTA")
+    val_logits, val_labels = infer_logits_ensemble([model_se, model_mha], val_loader, device, weights=[0.8, 0.2], use_tta=False)
+    val_f1 = evaluate_logits(val_logits, val_labels, threshold=0.5)
+    
+    test_logits, test_labels = infer_logits_ensemble([model_se, model_mha], test_loader, device, weights=[0.8, 0.2], use_tta=False)
+    test_f1 = evaluate_logits(test_logits, test_labels, threshold=0.5)
+    
+    results["ensemble_0.8_0.2_no_tta"] = {
+        "val_f1": float(val_f1),
+        "test_f1": float(test_f1),
+        "weights": [0.8, 0.2],
+        "tta": False,
     }
     print(f"  Val F1: {val_f1:.4f} | Test F1: {test_f1:.4f}")
 
