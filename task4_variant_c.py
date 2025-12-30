@@ -143,19 +143,6 @@ def run_task4_combined():
     print("Loading Task 3 MHA ResNet18...")
     model_mha = load_resnet("mha", ckpt_task3_mha, device)
 
-    # Inference with TTA
-    print("\nInferring validation set...")
-    val_logits_task2 = infer_logits(model_task2, val_loader, device, use_tta=True)
-    val_logits_se = infer_logits(model_se, val_loader, device, use_tta=True)
-    val_logits_mha = infer_logits(model_mha, val_loader, device, use_tta=True)
-    val_logits_ensemble = (val_logits_task2 + val_logits_se + val_logits_mha) / 3.0
-
-    print("Inferring test set...")
-    test_logits_task2 = infer_logits(model_task2, test_loader, device, use_tta=True)
-    test_logits_se = infer_logits(model_se, test_loader, device, use_tta=True)
-    test_logits_mha = infer_logits(model_mha, test_loader, device, use_tta=True)
-    test_logits_ensemble = (test_logits_task2 + test_logits_se + test_logits_mha) / 3.0
-
     # Load labels
     val_labels = pd.read_csv(val_csv).iloc[:, 1:].values
 
