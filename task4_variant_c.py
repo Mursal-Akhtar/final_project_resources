@@ -157,8 +157,10 @@ def run_task4_combined():
     test_logits_mha = infer_logits(model_mha, test_loader, device, use_tta=True)
     test_logits_ensemble = (test_logits_se + test_logits_mha) / 2.0
 
-    # Load labels
-    val_labels = pd.read_csv(val_csv).iloc[:, 1:].values
+    # Threshold search (finest grid: 0.20-0.80, step 0.01)
+    print("\nSearching thresholds on validation (grid: 0.20-0.80, step 0.01)...")
+    grid = np.arange(0.20, 0.81, 0.01)
+    thresholds = find_best_thresholds(val_logits_ensemble, val_labels, grid)
 
     # Evaluate
     val_f1 = evaluate_with_thresholds(val_logits_ensemble, val_labels, thresholds)
