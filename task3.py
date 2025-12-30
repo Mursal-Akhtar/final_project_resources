@@ -105,7 +105,8 @@ class MultiHeadAttention(nn.Module):
         V = V.view(b, -1, self.num_heads, self.head_dim).transpose(1, 2)  # [b, h, hw, d]
         
         # Scaled dot-product attention
-        scores = torch.matmul(Q, K.transpose(-2, -1)) / np.sqrt(self.head_dim)
+        # Use sqrt on CPU-free scalar to avoid casting issues
+        scores = torch.matmul(Q, K.transpose(-2, -1)) / (self.head_dim ** 0.5)
         attention = torch.softmax(scores, dim=-1)
         out = torch.matmul(attention, V)  # [b, h, hw, d]
         
@@ -157,9 +158,10 @@ class ResNet18WithAttention(nn.Module):
             self.attention3 = SEBlock(256)
             self.attention4 = SEBlock(512)
         elif attention_type == "mha":
-            self.attention1 = MultiHeadAttention(64, num_heads=4)
-            self.attention2 = MultiHeadAttention(128, num_heads=4)
-            self.attention3 = MultiHeadAttention(256, num_heads=8)
+            # To keep memory small, only apply MHA at deepest stage (8x8 tokens)
+            self.attention1 = nn.Identity()
+            self.attention2 = nn.Identity()
+            self.attention3 = nn.Identity()
             self.attention4 = MultiHeadAttention(512, num_heads=8)
         
         # Load pretrained weights if provided
@@ -308,13 +310,14 @@ def train_with_attention(backbone, attention_type, train_csv, val_csv, test_csv,
     ])
 
     # Datasets & DataLoaders
+    effective_batch_size = batch_size if attention_type != "mha" else min(batch_size, 16)
     train_ds = RetinaMultiLabelDataset(train_csv, train_image_dir, transform)
     val_ds = RetinaMultiLabelDataset(val_csv, val_image_dir, transform)
     test_ds = RetinaMultiLabelDataset(test_csv, test_image_dir, transform)
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=0)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=0)
-    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=0)
+    train_loader = DataLoader(train_ds, batch_size=effective_batch_size, shuffle=True, num_workers=0)
+    val_loader = DataLoader(val_ds, batch_size=effective_batch_size, shuffle=False, num_workers=0)
+    test_loader = DataLoader(test_ds, batch_size=effective_batch_size, shuffle=False, num_workers=0)
 
     # Build model with attention
     if backbone == "resnet18":
