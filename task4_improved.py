@@ -15,7 +15,8 @@ from sklearn.metrics import f1_score
 import warnings
 warnings.filterwarnings('ignore')
 
-from code_template import ResNet18WithAttention, RetinaMultiLabelDataset
+from code_template import RetinaMultiLabelDataset
+from task3 import ResNet18WithAttention
 
 
 # ========================
