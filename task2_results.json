@@ -1,0 +1,152 @@
+{
+  "resnet18_bce": {
+    "DR": {
+      "accuracy": 0.795,
+      "precision": 0.7587618735669833,
+      "recall": 0.7821428571428571,
+      "f1_score": 0.7673032719430177,
+      "kappa": 0.5361990950226245
+    },
+    "Glaucoma": {
+      "accuracy": 0.89,
+      "precision": 0.8883116883116883,
+      "recall": 0.8030814974996621,
+      "f1_score": 0.8342374924653406,
+      "kappa": 0.6709050112191473
+    },
+    "AMD": {
+      "accuracy": 0.915,
+      "precision": 0.7881651642919454,
+      "recall": 0.7530643513789581,
+      "f1_score": 0.769006046606427,
+      "kappa": 0.5382944052145573
+    },
+    "average_f1": 0.7901822703382617,
+    "onsite_submission": "submissions/task2_bce_resnet18.csv"
+  },
+  "resnet18_focal": {
+    "DR": {
+      "accuracy": 0.755,
+      "precision": 0.7168050911444288,
+      "recall": 0.7392857142857143,
+      "f1_score": 0.7240291740587423,
+      "kappa": 0.4506726457399103
+    },
+    "Glaucoma": {
+      "accuracy": 0.885,
+      "precision": 0.8625,
+      "recall": 0.8135558859305312,
+      "f1_score": 0.8338090248925178,
+      "kappa": 0.6685878962536023
+    },
+    "AMD": {
+      "accuracy": 0.9,
+      "precision": 0.7462422634836428,
+      "recall": 0.7844739530132788,
+      "f1_score": 0.7632575757575758,
+      "kappa": 0.5269631031220435
+    },
+    "average_f1": 0.773698591569612,
+    "onsite_submission": "submissions/task2_focal_resnet18.csv"
+  },
+  "resnet18_class_balanced": {
+    "DR": {
+      "accuracy": 0.755,
+      "precision": 0.7206736353077816,
+      "recall": 0.7488095238095238,
+      "f1_score": 0.7280119896755571,
+      "kappa": 0.460352422907489
+    },
+    "Glaucoma": {
+      "accuracy": 0.88,
+      "precision": 0.8574613792005097,
+      "recall": 0.803351804297878,
+      "f1_score": 0.8251748251748252,
+      "kappa": 0.6516185222818986
+    },
+    "AMD": {
+      "accuracy": 0.905,
+      "precision": 0.7577813248204309,
+      "recall": 0.7474463738508682,
+      "f1_score": 0.7524591231841573,
+      "kappa": 0.504950495049505
+    },
+    "average_f1": 0.7685486460115133,
+    "onsite_submission": "submissions/task2_class_balanced_resnet18.csv"
+  },
+  "efficientnet_bce": {
+    "DR": {
+      "accuracy": 0.7,
+      "precision": 0.6724137931034483,
+      "recall": 0.7,
+      "f1_score": 0.6744791666666667,
+      "kappa": 0.3589743589743589
+    },
+    "Glaucoma": {
+      "accuracy": 0.805,
+      "precision": 0.7375,
+      "recall": 0.7054331666441411,
+      "f1_score": 0.7181979117742694,
+      "kappa": 0.43804034582132567
+    },
+    "AMD": {
+      "accuracy": 0.875,
+      "precision": 0.6978221415607986,
+      "recall": 0.7505107252298264,
+      "f1_score": 0.7190853418731389,
+      "kappa": 0.4397131331241595
+    },
+    "average_f1": 0.7039208067713583,
+    "onsite_submission": "submissions/task2_bce_efficientnet.csv"
+  },
+  "efficientnet_focal": {
+    "DR": {
+      "accuracy": 0.665,
+      "precision": 0.6517435433624761,
+      "recall": 0.6797619047619048,
+      "f1_score": 0.6454182212696145,
+      "kappa": 0.31069958847736623
+    },
+    "Glaucoma": {
+      "accuracy": 0.8,
+      "precision": 0.7290771737520367,
+      "recall": 0.7090147317205028,
+      "f1_score": 0.717673630717109,
+      "kappa": 0.4360637247990977
+    },
+    "AMD": {
+      "accuracy": 0.84,
+      "precision": 0.6531165311653117,
+      "recall": 0.7308478038815118,
+      "f1_score": 0.6773543053034886,
+      "kappa": 0.3610223642172524
+    },
+    "average_f1": 0.6801487190967374,
+    "onsite_submission": "submissions/task2_focal_efficientnet.csv"
+  },
+  "efficientnet_class_balanced": {
+    "DR": {
+      "accuracy": 0.7,
+      "precision": 0.6785714285714286,
+      "recall": 0.7095238095238094,
+      "f1_score": 0.6782496782496783,
+      "kappa": 0.3697478991596639
+    },
+    "Glaucoma": {
+      "accuracy": 0.815,
+      "precision": 0.7571138211382114,
+      "recall": 0.7051628598459252,
+      "f1_score": 0.7236227824463118,
+      "kappa": 0.4507125890736342
+    },
+    "AMD": {
+      "accuracy": 0.89,
+      "precision": 0.7294117647058824,
+      "recall": 0.7987742594484167,
+      "f1_score": 0.7568523430592395,
+      "kappa": 0.5154185022026432
+    },
+    "average_f1": 0.7195749345850766,
+    "onsite_submission": "submissions/task2_class_balanced_efficientnet.csv"
+  }
+}
