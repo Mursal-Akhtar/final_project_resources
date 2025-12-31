@@ -107,19 +107,22 @@ def batch_simple_inference(model, loader, device, has_labels=True):
         for batch in loader:
             if has_labels:
                 imgs, labels, filenames = batch
-                all_labels.append(labels.numpy())
+                all_labels.append(labels.cpu().numpy())
             else:
                 imgs, filenames = batch
             
             imgs = imgs.to(device)
             outputs = torch.sigmoid(model(imgs)).cpu().numpy()
-            all_preds.extend(outputs)
+            all_preds.append(outputs)
             all_filenames.extend(filenames)
     
+    all_preds = np.vstack(all_preds)
+    
     if has_labels:
-        return np.array(all_preds), np.array(all_labels), all_filenames
+        all_labels = np.vstack(all_labels)
+        return all_preds, all_labels, all_filenames
     else:
-        return np.array(all_preds), all_filenames
+        return all_preds, all_filenames
 
 
 # ========================
