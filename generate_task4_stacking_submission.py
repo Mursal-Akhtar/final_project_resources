@@ -24,11 +24,11 @@ from task3 import ResNet18WithAttention
 # Dataset for prediction
 # ========================
 class RetinaMultiLabelDataset(Dataset):
-    def __init__(self, csv_file, image_dir, transform=None):
+    def __init__(self, csv_file, image_dir, transform=None, has_labels=True):
         self.data = pd.read_csv(csv_file)
         self.image_dir = image_dir
         self.transform = transform
-        self.has_labels = len(self.data.columns) > 1
+        self.has_labels = has_labels
 
     def __len__(self):
         return len(self.data)
@@ -165,11 +165,11 @@ def generate_stacking_submission():
     ])
     
     # Load validation set (has labels)
-    val_ds = RetinaMultiLabelDataset("val.csv", "./images/val", transform)
+    val_ds = RetinaMultiLabelDataset("val.csv", "./images/val", transform, has_labels=True)
     val_loader = DataLoader(val_ds, batch_size=32, shuffle=False, num_workers=0)
     
-    # Load onsite test set (no labels)
-    onsite_ds = RetinaMultiLabelDataset("onsite_test_submission.csv", "./images/onsite_test", transform)
+    # Load onsite test set (no labels - just image filenames)
+    onsite_ds = RetinaMultiLabelDataset("onsite_test_submission.csv", "./images/onsite_test", transform, has_labels=False)
     onsite_loader = DataLoader(onsite_ds, batch_size=32, shuffle=False, num_workers=0)
     
     # Load models
