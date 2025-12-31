@@ -209,7 +209,7 @@ def run_ultimate_optimization():
     # Apply optimized thresholds
     strategy1_preds = (onsite_se_tta > thresholds).astype(int)
     
-    save_submission(filenames, strategy1_preds, "strategy1_se_tta_thresh.csv")
+    save_submission(filenames, strategy1_preds, "task4_se_tta_thresh.csv")
     
     # ========================
     # Strategy 2: Weighted Ensemble (SE + MHA + Task2) with TTA
@@ -235,7 +235,7 @@ def run_ultimate_optimization():
                      weights[2] * onsite_task2_tta)
     
     strategy2_preds = (weighted_preds > 0.5).astype(int)
-    save_submission(filenames, strategy2_preds, "strategy2_weighted_ensemble_tta.csv")
+    save_submission(filenames, strategy2_preds, "task4_weighted_ensemble_tta.csv")
     
     # ========================
     # Strategy 3: Ensemble + Threshold Optimization
@@ -259,7 +259,7 @@ def run_ultimate_optimization():
     
     # Apply to test predictions
     strategy3_preds = (weighted_preds > ensemble_thresholds).astype(int)
-    save_submission(filenames, strategy3_preds, "strategy3_ensemble_tta_thresh.csv")
+    save_submission(filenames, strategy3_preds, "task4_final_submission.csv")
     
     # ========================
     # Strategy 4: Best single model (SE) with aggressive TTA
@@ -303,18 +303,18 @@ def run_ultimate_optimization():
     
     aggressive_tta_preds = np.array(aggressive_tta_preds)
     strategy4_preds = (aggressive_tta_preds > thresholds).astype(int)
-    save_submission(filenames, strategy4_preds, "strategy4_se_aggressive_tta_thresh.csv")
+    save_submission(filenames, strategy4_preds, "task4_se_aggressive_tta.csv")
     
     # Summary
     print("\n" + "="*70)
     print("OPTIMIZATION COMPLETE - 4 STRATEGIES GENERATED")
     print("="*70)
     print("\nGenerated submissions:")
-    print("1. strategy1_se_tta_thresh.csv - SE + TTA + Optimized Thresholds")
-    print("2. strategy2_weighted_ensemble_tta.csv - 3-Model Weighted Ensemble + TTA")
-    print("3. strategy3_ensemble_tta_thresh.csv - Ensemble + TTA + Optimized Thresholds")
-    print("4. strategy4_se_aggressive_tta_thresh.csv - SE + 10x TTA + Thresholds")
-    print("\nRECOMMENDATION: Try Strategy 3 first (most comprehensive)")
+    print("1. task4_se_tta_thresh.csv - SE + TTA + Optimized Thresholds")
+    print("2. task4_weighted_ensemble_tta.csv - 3-Model Weighted Ensemble + TTA")
+    print("3. task4_final_submission.csv - Ensemble + TTA + Optimized Thresholds (Best)")
+    print("4. task4_se_aggressive_tta.csv - SE + 10x TTA + Thresholds")
+    print("\nRECOMMENDATION: Use task4_final_submission.csv (best)")
     print("="*70)
 
 
@@ -336,7 +336,7 @@ if __name__ == "__main__":
     
     print("\n\nDOWNLOAD ALL 4 FILES:")
     print("from google.colab import files")
-    print("files.download('strategy3_ensemble_tta_thresh.csv')  # BEST BET")
-    print("files.download('strategy1_se_tta_thresh.csv')")
-    print("files.download('strategy2_weighted_ensemble_tta.csv')")
-    print("files.download('strategy4_se_aggressive_tta_thresh.csv')")
+    print("files.download('task4_final_submission.csv')  # BEST")
+    print("files.download('task4_se_tta_thresh.csv')")
+    print("files.download('task4_weighted_ensemble_tta.csv')")
+    print("files.download('task4_se_aggressive_tta.csv')")
